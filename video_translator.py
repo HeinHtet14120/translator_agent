@@ -43,6 +43,12 @@ class VideoTranslator:
         'my': 'Burmese/Myanmar',
         'th': 'Thai'
     }
+
+    NLLB_LANG_CODES = {
+        'en': 'eng_Latn',
+        'my': 'mya_Mymr',
+        'th': 'tha_Thai',
+    }
     
     def __init__(self, api_key: Optional[str] = None, use_local_translation: bool = False):
         self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
@@ -85,6 +91,39 @@ class VideoTranslator:
         print(f"✅ Transcription complete: {len(result['segments'])} segments")
         return result
     
+    def _init_nllb_model(self):
+        """Load NLLB-200 model and tokenizer (lazy-loaded, cached in memory)"""
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        model_name = "facebook/nllb-200-distilled-600M"
+        print("Loading NLLB-200 translation model (first run downloads ~2.5GB)...")
+        self.nllb_tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.nllb_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        print("NLLB-200 model loaded.")
+
+    def translate_with_nllb(self, text: str, source_lang: str, target_lang: str) -> str:
+        """
+        Translate text using NLLB-200 model locally
+
+        Args:
+            text: Text to translate
+            source_lang: Source language code
+            target_lang: Target language code
+
+        Returns:
+            Translated text
+        """
+        if not hasattr(self, 'nllb_model'):
+            self._init_nllb_model()
+
+        src_code = self.NLLB_LANG_CODES[source_lang]
+        tgt_code = self.NLLB_LANG_CODES[target_lang]
+
+        self.nllb_tokenizer.src_lang = src_code
+        inputs = self.nllb_tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        forced_bos_token_id = self.nllb_tokenizer.convert_tokens_to_ids(tgt_code)
+        translated = self.nllb_model.generate(**inputs, forced_bos_token_id=forced_bos_token_id, max_length=512)
+        return self.nllb_tokenizer.decode(translated[0], skip_special_tokens=True)
+
     def translate_with_claude(self, text: str, source_lang: str, target_lang: str) -> str:
         """
         Translate text using Claude API
@@ -146,13 +185,15 @@ Provide ONLY the translation, no explanations."""
         translated_segments = []
         
         if self.use_local:
-            print("⚠️  Using local translation (lower quality for Burmese/Thai)")
-            # Fallback to simple translation - in production, use argostranslate or similar
-            for seg in segments:
+            print("Using NLLB-200 local translation...")
+            for i, seg in enumerate(segments):
                 translated_segments.append({
                     **seg,
-                    'text': f"[UNTRANSLATED: {seg['text']}]"
+                    'text': self.translate_with_nllb(seg['text'], source_lang, target_lang)
                 })
+                if (i + 1) % 10 == 0 or (i + 1) == len(segments):
+                    print(f"  Translated {i + 1}/{len(segments)} segments")
+            print("Translation complete")
             return translated_segments
         
         # Batch translation for efficiency

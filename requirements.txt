@@ -3,8 +3,10 @@ openai-whisper>=20231117
 anthropic>=0.18.0
 pyyaml>=6.0
 
-# Optional: For local translation (lower quality)
-argostranslate>=1.9.0
+# Local translation with NLLB-200
+transformers>=4.30.0
+sentencepiece>=0.1.99
+torch>=2.0.0
 
 # Note: FFmpeg must be installed separately
 # Ubuntu/Debian: sudo apt install ffmpeg
