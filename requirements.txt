@@ -1,0 +1,12 @@
+# Core dependencies for AI Video Translator
+openai-whisper>=20231117
+anthropic>=0.18.0
+pyyaml>=6.0
+
+# Optional: For local translation (lower quality)
+argostranslate>=1.9.0
+
+# Note: FFmpeg must be installed separately
+# Ubuntu/Debian: sudo apt install ffmpeg
+# macOS: brew install ffmpeg
+# Windows: Download from https://ffmpeg.org/

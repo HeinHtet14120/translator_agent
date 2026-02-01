@@ -1,0 +1,51 @@
+# Video Translation Configuration
+# Copy this to config.yaml and customize
+
+# API Keys
+anthropic_api_key: "YOUR_API_KEY_HERE"  # Get from https://console.anthropic.com/
+
+# Default Settings
+defaults:
+  source_language: "en"           # Default source language
+  target_languages: ["my", "th"]  # Default target languages
+  whisper_model: "base"           # tiny, base, small, medium, large
+  use_local_translation: false    # Set to true for free (lower quality) translation
+  
+# Whisper Settings
+whisper:
+  model: "base"                   # Model size (larger = better quality, slower)
+  device: "auto"                  # auto, cpu, cuda
+  language: "en"                  # Set to null for auto-detection
+  
+# Translation Settings
+translation:
+  batch_size: 10                  # Number of segments to translate together
+  max_retries: 3                  # Retry failed translations
+  
+# Output Settings
+output:
+  keep_intermediate_files: true   # Keep .srt files
+  video_codec: "copy"             # Video codec (copy = no re-encoding)
+  subtitle_codec: "mov_text"      # Subtitle codec for MP4
+  
+# Batch Processing
+batch:
+  skip_existing: true             # Skip videos with existing output
+  continue_on_error: true         # Continue if one video fails
+  extensions: [".mp4", ".mkv", ".avi", ".mov", ".m4v"]
+  
+# Performance
+performance:
+  num_workers: 1                  # Parallel processing (experimental)
+  gpu_enabled: true               # Use GPU if available
+  
+# Languages
+# Add custom language codes and names
+languages:
+  en: "English"
+  my: "Burmese"
+  th: "Thai"
+  # Add more as needed:
+  # zh: "Chinese"
+  # ja: "Japanese"
+  # ko: "Korean"
